@@ -1,41 +1,30 @@
 package by.graph.entity;
 
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Graph
 {
-    public final ConcurrentHashMap<String, Vertex> vertices = new ConcurrentHashMap<>();
-    public final PriorityBlockingQueue<Edge> edges = new PriorityBlockingQueue<>();
+    public final ConcurrentHashMap<String, Vertex> vertices;
+    public final PriorityBlockingQueue<Edge> edges;
+    public final Vertex[] verticesIdsToNameMapping;
 
-    public AtomicReference<Double> strengthSum = new AtomicReference<>(0d);
-    public AtomicInteger strengthCount = new AtomicInteger();
+    public final double delta;
 
-    public double delta = 0d;
-
-
-    public void addEdge(Edge edge) {
-        this.edges.add(edge);
-        addToVertex(edge.from, edge);
-        addToVertex(edge.to, edge);
-        measureGraphStrength(edge);
+    public Graph(Map<String, Vertex> vertices, Queue<Edge> edges, double delta) {
+        this.vertices = new ConcurrentHashMap<>(vertices);
+        this.edges = new PriorityBlockingQueue<>(edges);
+        this.verticesIdsToNameMapping = getVertexesToIdsMapping();
+        this.delta = delta;
     }
 
-    private void measureGraphStrength(Edge edge) {
-        strengthCount.incrementAndGet();
-        strengthSum.accumulateAndGet(edge.strength, (sum, newValue) -> sum + newValue);
-    }
-
-    private void addToVertex(String vertexName, Edge edge) {
-        if (!this.vertices.containsKey(vertexName)) {
-            synchronized (this) {
-                if (!this.vertices.containsKey(vertexName)) {
-                    this.vertices.put(vertexName, new Vertex(vertexName));
-                }
-            }
-        }
-        this.vertices.get(vertexName).edges.add(edge);
+    private Vertex[] getVertexesToIdsMapping() {
+        Vertex[] vertexes = new Vertex[vertices.size()];
+        vertices.values().stream().forEach(vertex -> {
+            vertexes[vertex.id] = vertex;
+        });
+        return vertexes;
     }
 }

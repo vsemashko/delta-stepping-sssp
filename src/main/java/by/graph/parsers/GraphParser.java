@@ -20,19 +20,18 @@ public class GraphParser
     }
 
     public Graph parse(Path graphFile) {
-        Graph graph = new Graph();
+        GraphBuilder graph = new GraphBuilder();
         try (BufferedReader reader = Files.newBufferedReader(graphFile)) {
             reader.lines()
                     .parallel()
                     .map(parseEdgeLine())
                     .filter(edge -> edge != null)
                     .forEach(graph::addEdge);
-            graph.delta = graph.strengthSum.get() / graph.strengthCount.get();
         }
         catch (IOException e) {
             LOGGER.error("Error during edge graph parsing: " + e.getMessage(), e);
         }
-        return graph;
+        return graph.build();
     }
 
     private Function<String, Edge> parseEdgeLine() {

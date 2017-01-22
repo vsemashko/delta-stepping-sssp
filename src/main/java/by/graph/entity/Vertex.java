@@ -21,8 +21,4 @@ public class Vertex
         this.id = ID_SEQUENCE_GENERATOR.getAndIncrement();
         this.name = name;
     }
-
-    public void addEdge(Edge edge) {
-        this.edges.add(edge);
-    }
 }

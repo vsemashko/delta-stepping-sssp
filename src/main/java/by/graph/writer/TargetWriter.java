@@ -27,6 +27,7 @@ public class TargetWriter
         try (BufferedWriter writer = Files.newBufferedWriter(targetPath)) {
             String resultText = getResultText(graph, sourceTarget, sourceName);
             writer.write(resultText);
+            LOGGER.debug(resultText);
         }
         catch (IOException e) {
             LOGGER.error("Error during writing result: " + e.getMessage(), e);

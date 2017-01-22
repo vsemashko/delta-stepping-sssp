@@ -1,4 +1,4 @@
-package by.graph.iterator;
+package by.graph.bucket;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -12,12 +12,12 @@ import by.graph.entity.Vertex;
 
 public class BucketIterator implements Iterator<List<Vertex>>
 {
-    AtomicIntegerArray vertexBuckets;
-    Vertex[] vertexes;
+    private AtomicIntegerArray vertexBuckets;
+    private Vertex[] vertices;
 
-    public BucketIterator(Vertex[] vertexes, AtomicIntegerArray vertexBuckets) {
-        this.vertexes = vertexes;
+    public BucketIterator(Vertex[] vertices, AtomicIntegerArray vertexBuckets) {
         this.vertexBuckets = vertexBuckets;
+        this.vertices = vertices;
     }
 
     Map<Integer, List<Vertex>> buckets = null;
@@ -42,20 +42,17 @@ public class BucketIterator implements Iterator<List<Vertex>>
 
     private Map<Integer, List<Vertex>> getBuckets() {
         Map<Integer, List<Vertex>> buckets = new TreeMap<>();
-        getVertexIdStream(vertexes.length).forEach(i -> {
-            int bucketIndex = vertexBuckets.get(i);
-            if (bucketIndex >= 0) {
-                if (buckets.get(bucketIndex) == null) {
-                    buckets.put(bucketIndex, new ArrayList<>());
-                }
-                buckets.get(bucketIndex).add(vertexes[i]);
-            }
-        });
+        Stream.iterate(0, n -> n + 1)
+                .limit(vertexBuckets.length())
+                .forEach(i -> {
+                    int bucketIndex = vertexBuckets.get(i);
+                    if (bucketIndex >= 0) {
+                        if (buckets.get(bucketIndex) == null) {
+                            buckets.put(bucketIndex, new ArrayList<>());
+                        }
+                        buckets.get(bucketIndex).add(vertices[i]);
+                    }
+                });
         return buckets;
-    }
-
-    private Stream<Integer> getVertexIdStream(int verticesSize) {
-        return Stream.iterate(0, n -> n + 1)
-                .limit(verticesSize);
     }
 }
