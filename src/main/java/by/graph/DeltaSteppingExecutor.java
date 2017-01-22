@@ -7,18 +7,13 @@ import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class DeltaSteppingExecutor
 {
     public Graph graph;
-    public final ConcurrentHashMap<String, PriorityBlockingQueue<Edge>> strongEdges = new ConcurrentHashMap<>();
-    public final ConcurrentHashMap<String, PriorityBlockingQueue<Edge>> weakEdges = new ConcurrentHashMap<>();
     double delta;
 
     DeltaSteppingExecutor(Graph graph) {
@@ -40,36 +35,22 @@ public class DeltaSteppingExecutor
         });
 
         getVertexIdStream(vertexes.length).forEach(i -> vertexBuckets.set(i, NOT_IN_BUCKET_ID));
-
-        graph.edges.parallelStream().forEach(splitByDelta(graph.delta));
         relax(graph.vertices.get(graph.sourceVertexName), null, 1d);
 
-        getBucketStream(graph)
+        getBucketStream()
                 .filter((List<Vertex> bucket) -> bucket.size() > 0)
                 .forEach((List<Vertex> bucket) -> {
-                    List<Vertex> s;
                     bucket.forEach(vertex -> {
                         if (vertexBuckets.get(vertex.id) < 0) {
                             return;
                         }
-                        //vertexBuckets.set(vertex.id, IN_PROCESSING_ID);
                         vertex.edges.forEach(edge -> {
                             Vertex neighbourVertex = graph.vertices.get(edge.getNeighbourName(vertex.name));
                             relax(neighbourVertex, vertex, vertex.strongestPathToVertex.get() * edge.strength, edge);
                         });
-                /*strongEdges.get(vertex.name).forEach(edge -> {
-                    Vertex neighbourVertex = graph.vertices.get(edge.getNeighbourName(vertex.name));
-                    relax(neighbourVertex, vertex, vertex.strongestPathToVertex.get() * edge.strength);
-                });
-                weakEdges.get(vertex.name).forEach(edge -> {
-                    Vertex neighbourVertex = graph.vertices.get(edge.getNeighbourName(vertex.name));
-                    relax(neighbourVertex, vertex, vertex.strongestPathToVertex.get() * edge.strength);
-                });*/
                         vertexBuckets.set(vertex.id, NOT_IN_BUCKET_ID);
                     });
                 });
-
-        System.out.println("finish!");
         return graph;
     }
 
@@ -89,8 +70,8 @@ public class DeltaSteppingExecutor
         relax(vertex, prevVertex, newStrength, null);
     }
 
-    private Stream<List<Vertex>> getBucketStream(Graph graph) {
-        Iterator<List<Vertex>> bucketIterator = getBucketIterator(graph);
+    private Stream<List<Vertex>> getBucketStream() {
+        Iterator<List<Vertex>> bucketIterator = getBucketIterator();
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(bucketIterator, Spliterator
                 .DISTINCT), false);
     }
@@ -104,24 +85,7 @@ public class DeltaSteppingExecutor
         return (int) Math.round(1 - strength) * 10;
     }
 
-    private Consumer<Edge> splitByDelta(double delta) {
-        return edge -> {
-            if (edge.strength >= delta) {
-                addToVertexEdges(strongEdges, edge.from, edge);
-                addToVertexEdges(strongEdges, edge.to, edge);
-            } else {
-                addToVertexEdges(weakEdges, edge.from, edge);
-                addToVertexEdges(weakEdges, edge.to, edge);
-            }
-        };
-    }
-
-    private void addToVertexEdges(ConcurrentHashMap<String, PriorityBlockingQueue<Edge>> vertexEdgesMap, String vertexName, Edge edge) {
-        vertexEdgesMap.putIfAbsent(vertexName, new PriorityBlockingQueue<>());
-        vertexEdgesMap.get(vertexName).add(edge);
-    }
-
-    private Iterator<List<Vertex>> getBucketIterator(Graph graph) {
+    private Iterator<List<Vertex>> getBucketIterator() {
         return new Iterator<List<Vertex>>()
         {
             Map<Integer, List<Vertex>> buckets = null;
