@@ -1,4 +1,4 @@
-package by.graph;
+package by.graph.entity;
 
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,11 +20,6 @@ public class Vertex
     public Vertex(String name) {
         this.id = ID_SEQUENCE_GENERATOR.getAndIncrement();
         this.name = name;
-    }
-
-    public Vertex(String name, Edge edge) {
-        this(name);
-        this.addEdge(edge);
     }
 
     public void addEdge(Edge edge) {

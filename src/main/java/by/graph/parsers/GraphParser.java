@@ -8,18 +8,18 @@ import java.util.function.Function;
 
 import org.apache.log4j.Logger;
 
-import by.graph.Edge;
-import by.graph.Graph;
+import by.graph.entity.Edge;
+import by.graph.entity.Graph;
 
 public class GraphParser
 {
-    final static Logger LOGGER = Logger.getLogger(GraphParser.class);
+    private final static Logger LOGGER = Logger.getLogger(GraphParser.class);
 
     public static GraphParser getParser() {
         return new GraphParser();
     }
 
-    public Graph parseGraph(Path graphFile) {
+    public Graph parse(Path graphFile) {
         Graph graph = new Graph();
         try (BufferedReader reader = Files.newBufferedReader(graphFile)) {
             reader.lines()

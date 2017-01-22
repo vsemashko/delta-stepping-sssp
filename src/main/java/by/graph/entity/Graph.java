@@ -1,4 +1,4 @@
-package by.graph;
+package by.graph.entity;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -15,7 +15,6 @@ public class Graph
 
     public double delta = 0d;
 
-    public String sourceVertexName;
 
     public void addEdge(Edge edge) {
         this.edges.add(edge);
