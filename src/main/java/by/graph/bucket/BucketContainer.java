@@ -5,11 +5,16 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import by.graph.entity.Vertex;
 
+/**
+ * Container for managing vertex buckets in the Delta Stepping algorithm.
+ * Buckets are indexed by the discretized distance/strength value.
+ */
 public class BucketContainer
 {
     private final Vertex[] vertices;
@@ -37,13 +42,14 @@ public class BucketContainer
     }
 
     private int getBucketIndex(double strength) {
-        return (int) Math.round(1 - strength) * 10;
+        // Convert strength (0.0-1.0) to bucket index (0-10)
+        // Stronger paths (closer to 1.0) get lower bucket indices
+        return (int) Math.round((1 - strength) * 10);
     }
 
     private AtomicIntegerArray initVertexBuckets(int size) {
         AtomicIntegerArray vertexBuckets = new AtomicIntegerArray(size);
-        Stream.iterate(0, n -> n + 1)
-                .limit(size)
+        IntStream.range(0, size)
                 .forEach(i -> vertexBuckets.set(i, NOT_IN_BUCKET_ID));
         return vertexBuckets;
     }

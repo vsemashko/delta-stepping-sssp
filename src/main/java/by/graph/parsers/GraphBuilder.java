@@ -16,6 +16,7 @@ public class GraphBuilder
 
     private AtomicReference<Double> strengthSum = new AtomicReference<>(0d);
     private AtomicInteger strengthCount = new AtomicInteger();
+    private AtomicInteger vertexIdGenerator = new AtomicInteger(0);
 
     public GraphBuilder addEdge(Edge edge) {
         this.edges.add(edge);
@@ -39,7 +40,7 @@ public class GraphBuilder
         if (!this.vertices.containsKey(vertexName)) {
             synchronized (this) {
                 if (!this.vertices.containsKey(vertexName)) {
-                    this.vertices.put(vertexName, new Vertex(vertexName));
+                    this.vertices.put(vertexName, new Vertex(vertexName, vertexIdGenerator.getAndIncrement()));
                 }
             }
         }

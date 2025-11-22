@@ -1,6 +1,6 @@
 package by.graph.entity;
 
-public class Edge implements Comparable
+public class Edge implements Comparable<Edge>
 {
     public final String from;
     public final String to;
@@ -17,7 +17,7 @@ public class Edge implements Comparable
     }
 
     @Override
-    public int compareTo(Object o) {
-        return Double.compare(this.strength, ((Edge) o).strength);
+    public int compareTo(Edge other) {
+        return Double.compare(this.strength, other.strength);
     }
 }

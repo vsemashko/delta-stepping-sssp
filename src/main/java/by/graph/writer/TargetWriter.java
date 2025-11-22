@@ -7,7 +7,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import by.graph.entity.Graph;
 import by.graph.entity.SourceTarget;
@@ -15,7 +16,7 @@ import by.graph.entity.Vertex;
 
 public class TargetWriter
 {
-    private final static Logger LOGGER = Logger.getLogger(TargetWriter.class);
+    private final static Logger LOGGER = LogManager.getLogger(TargetWriter.class);
 
     public static TargetWriter getWriter() {
         return new TargetWriter();
@@ -45,20 +46,51 @@ public class TargetWriter
 
     private String getResultLine(Graph graph, String sourceName, String targetName) {
         Vertex targetVertex = graph.vertices.get(targetName);
-        String expandedPath = getExpandedPathString(graph, targetVertex);
+        if (targetVertex == null) {
+            LOGGER.warn("Target vertex not found: " + targetName);
+            return String.format("%s %s NOT_FOUND: No path", sourceName, targetName);
+        }
+
         double strongestPath = targetVertex.strongestPathToVertex.get();
+        if (strongestPath < 0) {
+            // Vertex exists but is unreachable from source
+            return String.format("%s %s UNREACHABLE: No path", sourceName, targetName);
+        }
+
+        String expandedPath = getExpandedPathString(graph, targetVertex);
         return String.format("%s %s %s: %s", sourceName, targetName, strongestPath, expandedPath);
     }
 
     private String getExpandedPathString(Graph graph, Vertex vertex) {
-        List<Vertex> vertices = new ArrayList<>();
-        while (vertex.previousVertexName != null) {
-            vertices.add(vertex);
-            vertex = graph.vertices.get(vertex.previousVertexName);
+        if (vertex == null) {
+            return "null";
         }
-        StringBuilder pathToVertex = new StringBuilder(vertex.name);
+
+        List<Vertex> vertices = new ArrayList<>();
+        Vertex current = vertex;
+
+        // Prevent infinite loops in case of cycle in path reconstruction
+        int maxSteps = graph.vertices.size();
+        int steps = 0;
+
+        while (current.previousVertexName != null && steps < maxSteps) {
+            vertices.add(current);
+            current = graph.vertices.get(current.previousVertexName);
+            if (current == null) {
+                LOGGER.error("Path reconstruction failed: vertex not found");
+                break;
+            }
+            steps++;
+        }
+
+        if (steps >= maxSteps) {
+            LOGGER.error("Possible cycle detected in path reconstruction");
+            return "ERROR: Cycle detected";
+        }
+
+        StringBuilder pathToVertex = new StringBuilder(current != null ? current.name : "ERROR");
         for (int i = vertices.size() - 1; i >= 0; i--) {
-            pathToVertex.append(String.format(" %s %s", vertices.get(i).strongestEdge, vertices.get(i).name));
+            pathToVertex.append(String.format(" %s %s", vertices.get(i).strongestEdge.get(), vertices.get(i).name));
         }
         return pathToVertex.toString();
     }

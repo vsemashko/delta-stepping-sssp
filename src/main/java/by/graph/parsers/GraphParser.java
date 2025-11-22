@@ -6,14 +6,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import by.graph.entity.Edge;
 import by.graph.entity.Graph;
 
 public class GraphParser
 {
-    private final static Logger LOGGER = Logger.getLogger(GraphParser.class);
+    private final static Logger LOGGER = LogManager.getLogger(GraphParser.class);
 
     public static GraphParser getParser() {
         return new GraphParser();

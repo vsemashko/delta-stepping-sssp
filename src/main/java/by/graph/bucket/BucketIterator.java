@@ -6,53 +6,50 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 import by.graph.entity.Vertex;
 
+/**
+ * Iterator for efficiently traversing buckets in order.
+ * Computes buckets once during construction and iterates through them.
+ */
 public class BucketIterator implements Iterator<List<Vertex>>
 {
-    private AtomicIntegerArray vertexBuckets;
-    private Vertex[] vertices;
+    private final Iterator<List<Vertex>> bucketListIterator;
 
     public BucketIterator(Vertex[] vertices, AtomicIntegerArray vertexBuckets) {
-        this.vertexBuckets = vertexBuckets;
-        this.vertices = vertices;
+        // Build all buckets once during construction
+        Map<Integer, List<Vertex>> buckets = buildBuckets(vertices, vertexBuckets);
+        this.bucketListIterator = buckets.values().iterator();
     }
-
-    Map<Integer, List<Vertex>> buckets = null;
 
     @Override
     public boolean hasNext() {
-        if (buckets == null) {
-            buckets = getBuckets();
-        }
-        return buckets.size() > 0;
+        return bucketListIterator.hasNext();
     }
 
     @Override
     public List<Vertex> next() {
-        if (buckets == null) {
-            buckets = getBuckets();
-        }
-        Map<Integer, List<Vertex>> result = buckets;
-        buckets = null;
-        return result.size() > 0 ? result.values().iterator().next() : new ArrayList<>();
+        return bucketListIterator.next();
     }
 
-    private Map<Integer, List<Vertex>> getBuckets() {
+    /**
+     * Builds a map of bucket index to list of vertices in that bucket.
+     * Uses TreeMap to maintain bucket order (lowest index first).
+     */
+    private Map<Integer, List<Vertex>> buildBuckets(Vertex[] vertices, AtomicIntegerArray vertexBuckets) {
         Map<Integer, List<Vertex>> buckets = new TreeMap<>();
-        Stream.iterate(0, n -> n + 1)
-                .limit(vertexBuckets.length())
+
+        IntStream.range(0, vertexBuckets.length())
                 .forEach(i -> {
                     int bucketIndex = vertexBuckets.get(i);
                     if (bucketIndex >= 0) {
-                        if (buckets.get(bucketIndex) == null) {
-                            buckets.put(bucketIndex, new ArrayList<>());
-                        }
-                        buckets.get(bucketIndex).add(vertices[i]);
+                        buckets.computeIfAbsent(bucketIndex, k -> new ArrayList<>())
+                               .add(vertices[i]);
                     }
                 });
+
         return buckets;
     }
 }

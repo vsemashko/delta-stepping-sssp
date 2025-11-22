@@ -15,10 +15,9 @@ public class Vertex
     public final AtomicReference<Double> strongestEdge = new AtomicReference<>(NO_STRENGTH);
 
     private static final Double NO_STRENGTH = -1d;
-    private static AtomicInteger ID_SEQUENCE_GENERATOR = new AtomicInteger(0);
 
-    public Vertex(String name) {
-        this.id = ID_SEQUENCE_GENERATOR.getAndIncrement();
+    public Vertex(String name, int id) {
+        this.id = id;
         this.name = name;
     }
 }
